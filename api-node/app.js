@@ -39,7 +39,7 @@ router.put('/stato/:idEsp', (req, res) => {
            console.log(err);}  
        });  
        request.addParameter('idEsp', TYPES.VarChar, req.params.idEsp);  
-       request.addParameter('statoEsp', TYPES.Int , req.body.statoEsp);  
+       request.addParameter('statoEsp', TYPES.Bit , req.body.statoEsp);  
        request.on('row', function(columns) {  
            columns.forEach(function(column) {  
              if (column.value === null) {  
@@ -68,7 +68,7 @@ router.put('/stato', (req, res) => {
            console.log(err);}  
        });  
     //    request.addParameter('idEsp', TYPES.VarChar, item.idEsp);  
-    //    request.addParameter('statoEsp', TYPES.Int , item.statoEsp);  
+    //    request.addParameter('statoEsp', TYPES.Bit , item.statoEsp);  
        request.on('row', function(columns) {  
            columns.forEach(function(column) {  
              if (column.value === null) {  
@@ -93,7 +93,7 @@ router.get('/stato/:idEsp', (req, res) => {
         if (err) {  
             console.log(err);}  
         });  
-    request.addParameter('idEsp', TYPES.Int, req.params.idEsp);
+    request.addParameter('idEsp', TYPES.VarChar, req.params.idEsp);
     var result = "";  
     request.on('row', function(columns) {  
         columns.forEach(function(column) {  
