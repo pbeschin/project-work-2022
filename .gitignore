@@ -1,4 +1,4 @@
 node_modules/
 .vscode/
 .azure/
-passwords.json
+passwords.json*
