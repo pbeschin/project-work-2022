@@ -10,3 +10,5 @@ Lista API (NodeJS):
 - GET /lista/posti_occupati
 - GET /tempoMedio
 - GET /countPosti
+
+Per avviare app NodeJS: `npm start`
