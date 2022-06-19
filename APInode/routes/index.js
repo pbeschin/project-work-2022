@@ -8,7 +8,7 @@ var Connection = require('tedious').Connection;
 const passwords = JSON.parse(fs.readFileSync('./passwords.json', {encoding:'utf8'}));
 
 var config = {  
-    server: 'granettoserver.database.windows.net',  //update me
+    server: 'beschin.database.windows.net',  //update me
     authentication: {
         type: 'default',
         options: {
