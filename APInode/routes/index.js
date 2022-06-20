@@ -51,10 +51,6 @@ router.put('/stato/:idEsp', (req, res) => {
         res.end();
        });
 
-       request.on("done", function(rowCount, more, rows){
-        res.end();
-       });
-
        connection.execSql(request);  
 });
 
