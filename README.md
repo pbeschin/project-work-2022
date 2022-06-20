@@ -1,7 +1,7 @@
 # PROJECT WORK 2022
 Lista API (NodeJS):
-- PUT /stato/:idEsp
-- PUT /stato
+- PUT /stato/:idEsp `{"statoEsp":Boolean}`
+- PUT /stato `[{"idEsp":"...", "statoEsp":Boolean}, {...}]`
 - GET /stato/:idEsp
 - GET /lista
 - GET /lista/terra
@@ -11,6 +11,8 @@ Lista API (NodeJS):
 - GET /countPosti
 - GET /transazioni/settimanaScorsa
 - GET /transazioni/settimanaCorrente
+- POST /transazioni/:idEsp `{"data_entrata":"YYYY-MM-dd", "pagato":Boolean}`
+- PUT /transazioni/:idEsp `{"data_uscita":"YYYY-MM-dd", "importo":Float, "pagato":Boolean}`
 
 Per avviare app NodeJS: `npm start`
 
