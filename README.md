@@ -14,5 +14,4 @@ Lista API (NodeJS):
 
 Per avviare app NodeJS: `npm start`
 
-Cloud:
-[ ] Isolare DB dall'esterno, che sia accessibile solo da server NodeJS
+- [ ] Isolare DB dall'esterno, che sia accessibile solo da server NodeJS
