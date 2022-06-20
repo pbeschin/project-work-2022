@@ -9,8 +9,9 @@ Lista API (NodeJS):
 - GET /lista/posti_occupati
 - GET /tempoMedio
 - GET /countPosti
+- GET /transazioni/settimanaScorsa
+- GET /transazioni/settimanaCorrente
 
 Per avviare app NodeJS: `npm start`
 
-Cloud:
-[ ] Isolare DB dall'esterno, che sia accessibile solo da server NodeJS
+- [ ] Isolare DB dall'esterno, che sia accessibile solo da server NodeJS
