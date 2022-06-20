@@ -248,7 +248,7 @@ router.get('/transazioni/settimanaScorsa', (req, res) => {
     connection.execSql(request); 
 });
 
-router.post('/pagamenti/:ID_rfid', (req, res) => {
+router.post('/transazioni/:ID_rfid', (req, res) => {
     request = new Request("IF NOT EXISTS(SELECT * FROM TPagamenti s " +
         "WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL) "+
         "BEGIN INSERT INTO TPagamenti (ID_rfid,data_entrata,pagato) VALUES(@ID_rfid,@data_entrata,@pagato);END", function(err) {  
@@ -277,7 +277,7 @@ router.post('/pagamenti/:ID_rfid', (req, res) => {
     connection.execSql(request);  
 });
 
-router.put('/pagamenti/:ID_rfid', (req, res) => {
+router.put('/transazioni/:ID_rfid', (req, res) => {
     request = new Request("UPDATE TPagamenti SET data_uscita=@data_uscita, importo=@importo, pagato=@pagato WHERE ID_rfid = @ID_rfid AND data_uscita IS NULL", function(err) {  
     if (err) {  
         console.log(err);}  
