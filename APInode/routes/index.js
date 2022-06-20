@@ -8,18 +8,18 @@ var Connection = require('tedious').Connection;
 const passwords = JSON.parse(fs.readFileSync('./passwords.json', {encoding:'utf8'}));
 
 var config = {  
-    server: 'beschin.database.windows.net',  //update me
+    server: 'beschin.database.windows.net',
     authentication: {
         type: 'default',
         options: {
-            userName: passwords["AzureDB"]["username"], //update me
-            password: passwords["AzureDB"]["password"]  //update me
+            userName: passwords["AzureDB"]["username"],
+            password: passwords["AzureDB"]["password"]
         }
     },
     options: {
         // If you are on Microsoft Azure, you need encryption:
         encrypt: true,
-        database: 'ParcheggioDB'  //update me
+        database: 'ParcheggioDB'
     }
 };  
 var connection = new Connection(config);  
@@ -47,10 +47,14 @@ router.put('/stato/:idEsp', (req, res) => {
            });  
        });
 
-       // Close the connection after the final event emitted by the request, after the callback passes
        request.on("requestCompleted", function (rowCount, more) {
         res.end();
        });
+
+       request.on("done", function(rowCount, more, rows){
+        res.end();
+       });
+
        connection.execSql(request);  
 });
 
@@ -63,20 +67,8 @@ router.put('/stato', (req, res) => {
     var request = new Request(commandSql, function(err) {  
         if (err) {  
            console.log(err);}  
-       });  
-    //    request.addParameter('idEsp', TYPES.VarChar, item.idEsp);  
-    //    request.addParameter('statoEsp', TYPES.Bit , item.statoEsp);  
-       request.on('row', function(columns) {  
-           columns.forEach(function(column) {  
-             if (column.value === null) {  
-               console.log('NULL');  
-             } else {  
-               console.log("Product id of inserted item is " + column.value);  
-             }  
-           });  
        });
 
-       // Close the connection after the final event emitted by the request, after the callback passes
        request.on("requestCompleted", function (rowCount, more) {
         res.end();
        });
@@ -101,12 +93,7 @@ router.get('/stato/:idEsp', (req, res) => {
             }  
         });  
     });  
-
-    request.on('done', function(rowCount, more) {  
-    console.log(rowCount + ' rows returned');  
-    });  
     
-    // Close the connection after the final event emitted by the request, after the callback passes
     request.on("requestCompleted", function (rowCount, more) {
         res.json(result);
     });
@@ -126,12 +113,7 @@ router.get('/lista', (req, res) => {
         tmp.presenza = columns[1].value;
         result.push(tmp);
     });  
-
-    request.on('done', function(rowCount, more) {
-        console.log(rowCount + ' rows returned');  
-    });  
     
-    // Close the connection after the final event emitted by the request, after the callback passes
     request.on("requestCompleted", function (rowCount, more) {
         res.json(result);
     });
@@ -150,13 +132,8 @@ router.get('/lista/terra', (req, res) => {
         tmp.ID_posto = columns[0].value;
         tmp.presenza = columns[1].value;
         result.push(tmp);
-    });  
-
-    request.on('done', function(rowCount, more) {  
-    console.log(rowCount + ' rows returned');  
-    });  
+    });    
     
-    // Close the connection after the final event emitted by the request, after the callback passes
     request.on("requestCompleted", function (rowCount, more) {
         res.json(result);
     });
@@ -176,12 +153,7 @@ router.get('/lista/primo', (req, res) => {
         tmp.presenza = columns[1].value;
         result.push(tmp);
     });  
-
-    request.on('done', function(rowCount, more) {  
-    console.log(rowCount + ' rows returned');  
-    });  
     
-    // Close the connection after the final event emitted by the request, after the callback passes
     request.on("requestCompleted", function (rowCount, more) {
         res.json(result);
     });
@@ -197,13 +169,8 @@ router.get('/lista/posti_occupati', (req, res) => {
     
     request.on('row', function(columns) { 
         result.push(columns[0].value);
-    });  
-
-    request.on('done', function(rowCount, more) {  
-    console.log(rowCount + ' rows returned');  
-    });  
+    });   
     
-    // Close the connection after the final event emitted by the request, after the callback passes
     request.on("requestCompleted", function (rowCount, more) {
         res.json(result);
     });
@@ -222,11 +189,6 @@ router.get('/tempoMedio', (req, res) => {
         result = columns[0].value;
     });  
 
-    request.on('done', function(rowCount, more) {  
-    console.log(rowCount + ' rows returned');  
-    });  
-    
-    // Close the connection after the final event emitted by the request, after the callback passes
     request.on("requestCompleted", function (rowCount, more) {
         res.json(result);
     });
@@ -244,11 +206,6 @@ router.get('/countPosti', (req, res) => {
         result = columns[0].value;
     });  
 
-    request.on('done', function(rowCount, more) {  
-    console.log(rowCount + ' rows returned');  
-    });  
-    
-    // Close the connection after the final event emitted by the request, after the callback passes
     request.on("requestCompleted", function (rowCount, more) {
         res.json(result);
     });
