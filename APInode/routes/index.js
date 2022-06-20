@@ -208,4 +208,44 @@ router.get('/countPosti', (req, res) => {
     connection.execSql(request); 
 });
 
+router.get('/transazioni/settimanaCorrente', (req, res) => {
+    request = new Request("SELECT * FROM Transazioni_Settimana_Corrente", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });  
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.giorno = columns[0].value;
+        tmp.n_transazioni = columns[1].value;
+        result.push(tmp);
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
+router.get('/transazioni/settimanaScorsa', (req, res) => {
+    request = new Request("SELECT * FROM Transazioni_Settimana_Scorsa", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });  
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.giorno = columns[0].value;
+        tmp.n_transazioni = columns[1].value;
+        result.push(tmp);
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
 module.exports = router;
