@@ -13,6 +13,7 @@ Lista API (NodeJS):
 - GET /transazioni/settimanaCorrente
 - POST /transazioni/:idEsp `{"data_entrata":"YYYY-MM-dd", "pagato":Boolean}`
 - PUT /transazioni/:idEsp `{"data_uscita":"YYYY-MM-dd", "importo":Float, "pagato":Boolean}`
+- GET /transazioni/completata/:ID_rfid
 
 Per avviare app NodeJS: `npm start`
 
