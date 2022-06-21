@@ -284,7 +284,7 @@ router.put('/transazioni/:ID_rfid', (req, res) => {
     });  
     request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
     request.addParameter('data_uscita', TYPES.DateTime, req.body.data_uscita);
-    request.addParameter('importo', TYPES.Decimal, req.body.importo)
+    request.addParameter('importo', TYPES.Float, req.body.importo)
     request.addParameter('pagato', TYPES.Bit, req.body.pagato);
     request.on('row', function(columns) {  
         columns.forEach(function(column) {  
@@ -297,9 +297,55 @@ router.put('/transazioni/:ID_rfid', (req, res) => {
     });
 
     request.on("requestCompleted", function (rowCount, more) {
-    res.end();
+        res.end();
     });
     connection.execSql(request);  
 });
+
+router.get('/transazioni/completata/:ID_rfid', (req, res) => {
+    request = new Request("SELECT COUNT(ID_rfid) FROM TPagamenti WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });
+    
+    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);
+    var result;
+    
+    request.on('row', function(columns) { 
+        result = columns[0].value == 0;
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
+
+router.get('/transazioni/:ID_rfid', (req, res) => {
+    request = new Request("SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });
+    
+    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.ID_rfid = columns[0].value;
+        tmp.data_entrata = columns[1].value;
+        tmp.data_uscita = columns[2].value;
+        tmp.importo = columns[3].value;
+        tmp.pagato = columns[4].value;
+        result.push(tmp);
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
 
 module.exports = router;
