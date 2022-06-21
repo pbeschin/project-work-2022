@@ -208,4 +208,144 @@ router.get('/countPosti', (req, res) => {
     connection.execSql(request); 
 });
 
+router.get('/transazioni/settimanaCorrente', (req, res) => {
+    request = new Request("SET DATEFIRST 1; SELECT * FROM Transazioni_Settimana_Corrente", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });  
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.giorno = columns[0].value;
+        tmp.n_transazioni = columns[1].value;
+        result.push(tmp);
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
+router.get('/transazioni/settimanaScorsa', (req, res) => {
+    request = new Request("SET DATEFIRST 1; SELECT * FROM Transazioni_Settimana_Scorsa", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });  
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.giorno = columns[0].value;
+        tmp.n_transazioni = columns[1].value;
+        result.push(tmp);
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
+router.post('/transazioni/:ID_rfid', (req, res) => {
+    request = new Request("IF NOT EXISTS(SELECT * FROM TPagamenti s " +
+        "WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL) "+
+        "BEGIN INSERT INTO TPagamenti (ID_rfid,data_entrata,pagato) VALUES(@ID_rfid,@data_entrata,@pagato);END", function(err) {  
+        if (err) {  
+            console.log(err);
+        }
+    });  
+    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
+    request.addParameter('data_entrata', TYPES.DateTime , req.body.data_entrata);
+    request.addParameter('pagato', TYPES.Bit, 0);
+    request.on('row', function(columns) {  
+        columns.forEach(function(column) {  
+            if (column.value === null) {  
+            console.log('NULL');  
+            } else {  
+            console.log("Product id of inserted item is " + column.value);  
+            }  
+        });  
+    });
+    request.on("row", function (columns) {
+        console.log(column[0].value)
+    });
+    request.on("requestCompleted", function (rowCount, more) {
+        res.end();
+    });
+    connection.execSql(request);  
+});
+
+router.put('/transazioni/:ID_rfid', (req, res) => {
+    request = new Request("UPDATE TPagamenti SET data_uscita=@data_uscita, importo=@importo, pagato=@pagato WHERE ID_rfid = @ID_rfid AND data_uscita IS NULL", function(err) {  
+    if (err) {  
+        console.log(err);}  
+    });  
+    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
+    request.addParameter('data_uscita', TYPES.DateTime, req.body.data_uscita);
+    request.addParameter('importo', TYPES.Float, req.body.importo)
+    request.addParameter('pagato', TYPES.Bit, req.body.pagato);
+    request.on('row', function(columns) {  
+        columns.forEach(function(column) {  
+            if (column.value === null) {  
+            console.log('NULL');  
+            } else {  
+            console.log("Product id of inserted item is " + column.value);  
+            }  
+        });  
+    });
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.end();
+    });
+    connection.execSql(request);  
+});
+
+router.get('/transazioni/completata/:ID_rfid', (req, res) => {
+    request = new Request("SELECT COUNT(ID_rfid) FROM TPagamenti WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });
+    
+    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);
+    var result;
+    
+    request.on('row', function(columns) { 
+        result = columns[0].value == 0;
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
+
+router.get('/transazioni/:ID_rfid', (req, res) => {
+    request = new Request("SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });
+    
+    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.ID_rfid = columns[0].value;
+        tmp.data_entrata = columns[1].value;
+        tmp.data_uscita = columns[2].value;
+        tmp.importo = columns[3].value;
+        tmp.pagato = columns[4].value;
+        result.push(tmp);
+    });  
+
+    request.on("requestCompleted", function (rowCount, more) {
+        res.json(result);
+    });
+    connection.execSql(request); 
+});
+
+
 module.exports = router;
