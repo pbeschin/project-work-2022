@@ -9,12 +9,14 @@ from display_park import *
 
 BASE_API_URL = f"http://192.168.43.181:3000"  # ip di pietro
 
-#local variable for counting parking spaces
+# local variable for counting parking spaces
 parkingSpots = {0: [0]*50,
                 1: [0]*50,
                 2: [0]*50}
 
-#debug per level
+# debug per level
+
+
 def printParkingSpots(level):
     print(f"Printing level {level} parking spots")
     for i in range(5):
@@ -28,8 +30,8 @@ def on_connect(client, userdata, flags, rc):
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    #"{root:PW2k22}/{version:}1.0/{level:0+}/{parkID:1+}"
-    #"pw2k22/1.0/0/1"
+    # "{root:PW2k22}/{version:}1.0/{level:0+}/{parkID:1+}"
+    # "pw2k22/1.0/0/1"
     client.subscribe("pw2k22/1.0/#")
 
 # The callback for when a PUBLISH message is received from the server.
@@ -71,6 +73,8 @@ client.on_message = on_message
 client.connect("test.mosquitto.org", 1883, 60)
 
 alive = 1
+
+
 def updateDisplay():
     start = time.perf_counter()
     level = 0
@@ -79,8 +83,8 @@ def updateDisplay():
         if (now - start) > 5:
             start = now
             level = not level
-        displayPark(0, len(parkingSpots[0]) - sum(parkingSpots[0]), display = 0)
-        displayPark(1, len(parkingSpots[1]) - sum(parkingSpots[1]), display = 1)
+        displayPark(0, len(parkingSpots[0]) - sum(parkingSpots[0]), display=0)
+        displayPark(1, len(parkingSpots[1]) - sum(parkingSpots[1]), display=1)
 
 
 displayThread = Thread(target=updateDisplay)
