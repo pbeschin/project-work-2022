@@ -29,10 +29,45 @@ connection.on('connect', function(err) {
         console.log(`Not connected\n${err}`);
     } else {
         console.log("Connected");
+        getModalita();
     }
 });
 
+var modalitaCalcolo;
+
 connection.connect();
+
+function getModalita(){
+    request = new Request("SELECT TOP 1 mod_tariffa FROM TConfig", function(err) {  
+        if (err) {  
+           console.log(err);}  
+    });  
+    
+    request.on("row", function (columns) {
+        modalitaCalcolo = columns[0].value;
+    });
+    request.on("requestCompleted", function () {
+        console.log(modalitaCalcolo)
+    });
+    connection.execSql(request);  
+}
+
+router.get('/stato/:idEsp', (req, res) => {
+    request = new Request("SELECT presenza FROM TPosti WHERE ID_posto = @idEsp", function(err) {  
+        if (err) {  
+            console.log(err);}  
+    });  
+    request.addParameter('idEsp', TYPES.VarChar, req.params.idEsp);
+    var result;  
+    request.on('row', function(columns) {  
+        result = columns[0].value; 
+    });  
+    
+    request.on("requestCompleted", function (rowCount, more, rows) {
+        rowCount ? res.status(201).json(result) : res.status(404).end();
+    });
+    connection.execSql(request); 
+});
 
 router.put('/stato/:idEsp', (req, res) => {
     request = new Request("UPDATE TPosti SET presenza = @statoEsp WHERE ID_posto = @idEsp", function(err) {  
@@ -75,25 +110,7 @@ router.put('/stato', (req, res) => {
     connection.execSql(request);  
 });
 
-
-router.get('/stato/:idEsp', (req, res) => {
-    request = new Request("SELECT presenza FROM TPosti WHERE ID_posto = @idEsp", function(err) {  
-        if (err) {  
-            console.log(err);}  
-    });  
-    request.addParameter('idEsp', TYPES.VarChar, req.params.idEsp);
-    var result;  
-    request.on('row', function(columns) {  
-        result = columns[0].value; 
-    });  
-    
-    request.on("requestCompleted", function (rowCount, more, rows) {
-        rowCount ? res.status(201).json(result) : res.status(404).end();
-    });
-    connection.execSql(request); 
-});
-
-router.get('/stato/lista', (req, res) => {
+router.get('/lista/stato', (req, res) => {
     request = new Request("SELECT ID_posto, presenza FROM TPosti", function(err) {  
         if (err) {  
             console.log(err);}  
@@ -113,7 +130,7 @@ router.get('/stato/lista', (req, res) => {
     connection.execSql(request); 
 });
 
-router.get('/stato/lista/terra', (req, res) => {
+router.get('/lista/stato/terra', (req, res) => {
     request = new Request("SELECT * FROM TPosti WHERE LEFT(ID_Posto,1) = '0'", function(err) {  
         if (err) {  
             console.log(err);}  
@@ -133,7 +150,7 @@ router.get('/stato/lista/terra', (req, res) => {
     connection.execSql(request); 
 });
 
-router.get('/stato/lista/primo', (req, res) => {
+router.get('/lista/stato/primo', (req, res) => {
     request = new Request("SELECT * FROM TPosti WHERE LEFT(ID_Posto,1) = '1'", function(err) {  
         if (err) {  
             console.log(err);}  
@@ -170,24 +187,6 @@ router.get('/postiOccupati', (req, res) => {
     connection.execSql(request); 
 });
 
-
-router.get('/tempoMedio', (req, res) => {
-    request = new Request("SELECT * FROM Tempo_Medio_Affluenza", function(err) {  
-        if (err) {  
-            console.log(err);}  
-        });  
-    var result;
-    
-    request.on('row', function(columns) { 
-        result = columns[0].value;
-    });  
-
-    request.on("requestCompleted", function (rowCount, more, rows) {
-        res.json(result);
-    });
-    connection.execSql(request); 
-});
-
 router.get('/countPosti', (req, res) => {
     request = new Request("SELECT COUNT(ID_posto) FROM TPosti WHERE presenza = 1", function(err) {  
         if (err) {  
@@ -205,45 +204,20 @@ router.get('/countPosti', (req, res) => {
     connection.execSql(request); 
 });
 
-router.get('/transazioni/settimanaCorrente', (req, res) => {
-    request = new Request("SET DATEFIRST 1; SELECT * FROM Transazioni_Settimana_Corrente", function(err) {  
+router.get('/tempoMedio', (req, res) => {
+    request = new Request("SELECT * FROM Tempo_Medio_Affluenza", function(err) {  
         if (err) {  
             console.log(err);}  
-    });  
-    var result = [];
-    
-    request.on('row', function(columns) { 
-        var tmp = {};
-        tmp.giorno = columns[0].value;
-        tmp.n_transazioni = columns[1].value;
-        result.push(tmp);
-    });
-
-    request.on("requestCompleted", function (rowCount, more, rows) {
-        res.json(result);
-    });
-
-    connection.execSql(request); 
-});
-
-router.get('/transazioni/settimanaScorsa', (req, res) => {
-    request = new Request("SET DATEFIRST 1; SELECT * FROM Transazioni_Settimana_Scorsa", function(err) {  
-        if (err) {  
-            console.log(err);
-        }  
         });  
-    var result = [];
+    var result;
     
     request.on('row', function(columns) { 
-        var tmp = {};
-        tmp.giorno = columns[0].value;
-        tmp.n_transazioni = columns[1].value;
-        result.push(tmp);
+        result = columns[0].value;
     });  
+
     request.on("requestCompleted", function (rowCount, more, rows) {
         res.json(result);
     });
-
     connection.execSql(request); 
 });
 
@@ -268,75 +242,67 @@ router.post('/transazioni/:ID_rfid', (req, res) => {
     connection.execSql(request);  
 });
 
-router.put('/transazioni/uscita/:ID_rfid', (req, res) => {
-    request = new Request(`UPDATE TPagamenti SET data_uscita=@du WHERE ID_rfid=@id AND data_uscita IS NULL; EXEC CalcolaImporto @data_uscita=@du, @ID_rfid=@id`, function(err) {  
-    if (err) {  
-        console.log(err);}  
+router.get('/transazioni/settimanaScorsa', (req, res) => {
+    request = new Request("SET DATEFIRST 1; SELECT * FROM Transazioni_Settimana_Scorsa", function(err) {  
+        if (err) {  
+            console.log(err);
+        }  
+        });  
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.giorno = columns[0].value;
+        tmp.n_transazioni = columns[1].value;
+        result.push(tmp);
     });  
-    request.addParameter('id', TYPES.VarChar, req.params.ID_rfid);  
-    request.addParameter('du', TYPES.DateTime, req.body.data_uscita);
+    request.on("requestCompleted", function (rowCount, more, rows) {
+        res.json(result);
+    });
 
-    var resStatus = 404;
-    request.on("doneInProc", function (rowCount, more, rows) {
-        if (rowCount){
-            resStatus = 201;
-        }
+    connection.execSql(request); 
+});
+
+router.get('/transazioni/settimanaCorrente', (req, res) => {
+    request = new Request("SET DATEFIRST 1; SELECT * FROM Transazioni_Settimana_Corrente", function(err) {  
+        if (err) {  
+            console.log(err);}  
+    });  
+    var result = [];
+    
+    request.on('row', function(columns) { 
+        var tmp = {};
+        tmp.giorno = columns[0].value;
+        tmp.n_transazioni = columns[1].value;
+        result.push(tmp);
     });
 
     request.on("requestCompleted", function (rowCount, more, rows) {
-        res.status(resStatus).end();
+        res.json(result);
     });
 
-    connection.execSql(request);  
+    connection.execSql(request); 
 });
 
-router.put('/transazioni/pagamento/:ID_rfid', (req, res) => {
-    request = new Request("UPDATE TPagamenti SET pagato=1 WHERE ID_rfid = @ID_rfid AND pagato=0", function(err) {  
-    if (err) {  
-        console.log(err);}  
-    });  
-    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
-    request.addParameter('data_uscita', TYPES.DateTime, req.body.data_uscita);
-
-    request.on("doneInProc", function (rowCount, more, rows) {
-        console.log(rowCount, more, rows);
-        rowCount ? res.status(201) : res.status(404);
-    });
-
-    request.on("requestCompleted", function (rowCount, more, rows) {
-        res.end();
-    });
-
-    connection.execSql(request);  
-});
-
-router.get('/transazioni/lista', (req, res) => {
-    var request;
-
+router.get('/lista/transazioni', (req, res) => {
+    var sqlCommand;
     if (req.query.data_uscita_inizio && req.query.data_uscita_fine) {
-        request = new Request("SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita BETWEEN @data_uscita_inizio AND @data_uscita_fine", function(err) {  
-            if (err) {  
-                console.log(err);
-            }  
-        });
-        if (req.query.data_uscita_inizio) {
-            request.addParameter('data_uscita_inizio', TYPES.DateTime, req.query.data_uscita_inizio);
-        } else {
-            request.addParameter('data_uscita_inizio', TYPES.DateTime, '01-01-1753 00:00:00.000');
-        }
-        if (req.query.data_uscita_fine) {
-            request.addParameter('data_uscita_fine', TYPES.DateTime, req.query.data_uscita_fine);
-        } else {
-            request.addParameter('data_uscita_fine', TYPES.DateTime, new Date().toISOString().split('T')[0]);
-        }
-        
-    } else {
-        request = new Request("SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti", function(err) {  
-            if (err) {  
-                console.log(err);
-            }  
-        });
+        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita BETWEEN @data_uscita_inizio AND @data_uscita_fine";
     }
+    else if (req.query.data_uscita_inizio) {
+        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita > @data_uscita_inizio";
+    } else if (req.query.data_uscita_fine) {
+        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita < @data_uscita_fine";
+    }
+    
+    request = new Request(sqlCommand, function(err) {  
+        if (err) {  
+            console.log(err);
+        }  
+    });
+
+    request.addParameter('data_uscita_inizio', TYPES.DateTime, req.query.data_uscita_inizio);
+    request.addParameter('data_uscita_fine', TYPES.DateTime, req.query.data_uscita_fine);
     
     var result = [];
     
@@ -356,13 +322,111 @@ router.get('/transazioni/lista', (req, res) => {
     connection.execSql(request); 
 });
 
+router.put('/transazioni/:ID_rfid/uscita', (req, res) => {
+    var sqlCommand = "UPDATE TPagamenti SET data_uscita=@du WHERE ID_rfid=@id AND data_uscita IS NULL;";
+    if (modalitaCalcolo == '0') {
+        sqlCommand += "EXEC CalcolaImporto @data_uscita=@du, @ID_rfid=@id;";
+    } else if (modalitaCalcolo == '1') {
+        sqlCommand += "EXEC CalcolaImportoRotazione @data_uscita=@du, @ID_rfid=@id;";
+    } else {
+        sqlCommand += "EXEC CalcolaImportoFisso @data_uscita=@du, @ID_rfid=@id";
+    }
+    sqlCommand += "SELECT importo FROM TPagamenti WHERE ID_rfid=@id AND pagato=0;";
+    request = new Request(sqlCommand, function(err){
+        if (err) {  
+            console.log(err);}  
+    });  
+    request.addParameter('id', TYPES.VarChar, req.params.ID_rfid);  
+    request.addParameter('du', TYPES.DateTime, req.body.data_uscita);
 
-router.put('/tariffe', (req, res) => {
-    request = new Request("UPDATE Ttariffe SET costo_forzato=@costo_forzato WHERE giorno = @giorno", function(err) {  
+    var result;
+    var resStatus = 404;
+    request.on("doneInProc", function (rowCount, more, rows) {
+        if (rowCount){
+            resStatus = 201;
+        }
+    });
+
+    request.on("row", function(columns) {
+        result = columns[0].value;
+    });
+    request.on("requestCompleted", function (rowCount, more, rows) {
+        res.status(resStatus).json(result);
+    });
+
+    connection.execSql(request);  
+});
+
+router.put('/transazioni/:ID_rfid/pagamento', (req, res) => {
+    request = new Request("UPDATE TPagamenti SET pagato=1 WHERE ID_rfid = @ID_rfid AND pagato=0", function(err) {  
     if (err) {  
         console.log(err);}  
     });  
+    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
 
+    request.on("doneInProc", function (rowCount, more, rows) {
+        console.log(rowCount, more, rows);
+        rowCount ? res.status(201) : res.status(404);
+    });
+
+    request.on("requestCompleted", function (rowCount, more, rows) {
+        res.end();
+    });
+
+    connection.execSql(request);  
+});
+
+router.get('/modalitaTariffa', (req, res) => {
+    request = new Request("SELECT TOP 1 mod_tariffa FROM TConfig", function(err){
+        if (err) {  
+            console.log(err);}  
+    });  
+
+    var result;
+    request.on("row", function (columns) {
+        result = columns[0].value;
+    });
+
+    request.on("requestCompleted", function (rowCount, more, rows) {
+        res.json(result)
+    });
+
+    connection.execSql(request);  
+});
+
+router.put('/modalitaTariffa/:modalita', (req, res) => {
+    var sqlCommand = "";
+    if (req.params.modalita == '0' || req.params.modalita == '1') {
+        sqlCommand = "UPDATE Ttariffe SET costo_forzato=NULL WHERE giorno=@giorno;"
+    }
+    sqlCommand += "UPDATE TConfig SET mod_tariffa=@modalita";
+    request = new Request(sqlCommand, function(err) {
+        if (err) {  
+            console.log(err);}  
+    });  
+    
+    request.addParameter('modalita', TYPES.Int, req.params.modalita);
+    request.addParameter('giorno', TYPES.Date, new Date().toISOString().split('T')[0]);
+
+    var result;
+    request.on("row", function (columns) {
+        result = columns[0].value;
+    });
+
+    request.on("requestCompleted", function (rowCount, more, rows) {
+        modalitaCalcolo = req.params.modalita;
+        res.json(result);
+    });
+
+    connection.execSql(request);  
+});
+
+router.put('/tariffe', (req, res) => {
+    request = new Request("UPDATE Ttariffe SET costo_forzato=@costo_forzato WHERE giorno = @giorno; UPDATE TConfig SET mod_tariffa=2", function(err) {  
+    if (err) {  
+        console.log(err);}  
+    });  
+    
     request.addParameter('giorno', TYPES.Date, new Date().toISOString().split('T')[0]);
     request.addParameter('costo_forzato', TYPES.Float, req.body.costo_forzato);
     
@@ -370,6 +434,7 @@ router.put('/tariffe', (req, res) => {
         rowCount ? res.status(201) : res.status(404);
     });
     request.on("requestCompleted", function () {
+        modalitaCalcolo = 2;
         res.end();
     });
 
@@ -382,8 +447,8 @@ router.get('/tariffe', (req, res) => {
     if (err) {  
         console.log(err);}  
     });  
-
     request.addParameter('giorno', TYPES.Date, new Date().toISOString().split('T')[0]);
+
     var result = {};
     request.on("row", function(columns) {
         result.costo_orario = columns[0].value;
