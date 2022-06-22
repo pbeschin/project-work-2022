@@ -96,8 +96,7 @@ disChars = {
 
 
 def displayPark(level: int, number: int, display=0):
-    displayText(f"P{level % 10}{number:02d}", [
-                0, 1, 0, 0], selectedDisplay=display)
+    displayText(f"P{level % 10}{number:02d}", [0, 1, 0, 0], selectedDisplay = display)
 
 
 def displayText(text, dots=[0, 0, 0, 0], selectedDisplay=1):
@@ -111,8 +110,6 @@ def displayText(text, dots=[0, 0, 0, 0], selectedDisplay=1):
         GPIO.output(digit, 0)
         time.sleep(0.001)
         GPIO.output(digit, 1)
-
-
 """
     for digit in range(4):
         displayDigit(s[digit], dots[digit])
@@ -120,7 +117,6 @@ def displayText(text, dots=[0, 0, 0, 0], selectedDisplay=1):
         time.sleep(0.001)
         GPIO.output(digits1[digit], 1)
 """
-
 
 def displayDigit(char, dot):
     for loop in range(0, 7):
