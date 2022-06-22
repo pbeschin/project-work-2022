@@ -12,7 +12,7 @@ Lista API (NodeJS):
 - GET /transazioni/settimanaScorsa
 - GET /transazioni/settimanaCorrente
 - POST /transazioni/:ID_rfid `{"data_entrata":"YYYY-MM-dd", "pagato":Boolean}`
-- PUT /transazioni/:ID_rfid `{"data_uscita":"YYYY-MM-dd", "importo":Float, "pagato":Boolean}`
+- PUT /transazioni/:ID_rfid `{"data_uscita":"YYYY-MM-dd"}`
 - GET /transazioni/completata/:ID_rfid
 - PUT /transizioni/:ID_rfid
 - GET /transazioni/lista
