@@ -12,10 +12,18 @@ pinE = 26
 pinF = 23
 pinG = 12
 pinDP = 6
+
 D1 = 22
 D2 = 27
 D3 = 17
 D4 = 4
+
+D5 = 19
+D6 = 21
+D7 = 20
+D8 = 16
+
+digits2 = (D5, D6, D7, D8)
 
 # code modified, tweaked and tailored from code by bertwert
 # on RPi forum thread topic 91796
@@ -29,13 +37,24 @@ for segment in segments:
     GPIO.output(segment, 0)
 
 # GPIO ports for the digit 0-3 pins
-digits = (D1, D2, D3, D4)
+digits1 = (D1, D2, D3, D4)
 
-for digit in digits:
+for digit in digits1:
     GPIO.setup(digit, GPIO.OUT)
     GPIO.output(digit, 1)
 
-num = {
+# GPIO ports for the digit 0-3 pins
+digits2 = (D5, D6, D7, D8)
+
+for digit in digits2:
+    GPIO.setup(digit, GPIO.OUT)
+    GPIO.output(digit, 1)
+
+displays = (digits1, digits2)
+
+# displayable characters
+
+disChars = {
     '0': (1, 1, 1, 1, 1, 1, 0, 0),  # 0
     '1': (0, 1, 1, 0, 0, 0, 0, 0),  # 1
     '2': (1, 1, 0, 1, 1, 0, 1, 0),  # 2
@@ -76,43 +95,41 @@ num = {
 }
 
 
-"""
-def displayTime():
-    n = time.ctime()[11:13]+time.ctime()[14:16]
-    s = str(n).rjust(4)
-    print(s)
-    for digit in range(4):
-        displayDigit(s[digit])
-        GPIO.output(digits[digit], 0)
+def displayPark(level: int, number: int, display=0):
+    displayText(f"P{level % 10}{number:02d}", [0, 1, 0, 0], selectedDisplay = display)
+
+
+def displayText(text, dots=[0, 0, 0, 0], selectedDisplay=1):
+    s = text.lower() + ("_" * 4)
+    # print(s)
+    # char is the current char being displayed
+    # dot is if the dot has to be diaplayed or not
+    # digit is where the char is being displayed
+    for char, dot, digit in zip(s, dots, displays[selectedDisplay]):
+        displayDigit(char, dot)
+        GPIO.output(digit, 0)
         time.sleep(0.001)
-        GPIO.output(digits[digit], 1)
+        GPIO.output(digit, 1)
 """
-
-def displayPark(level: int, number):
-    displayText(f"P{level % 10}{number:02d}", [0, 1, 0, 0])
-
-
-def displayText(text, dots=[0, 0, 0, 0]):
-    n = time.ctime()[11:13]+time.ctime()[14:16]
-    s = text.lower()
-    #print(s)
     for digit in range(4):
         displayDigit(s[digit], dots[digit])
-        GPIO.output(digits[digit], 0)
+        GPIO.output(digits1[digit], 0)
         time.sleep(0.001)
-        GPIO.output(digits[digit], 1)
-
+        GPIO.output(digits1[digit], 1)
+"""
 
 def displayDigit(char, dot):
     for loop in range(0, 7):
-        GPIO.output(segments[loop], num[char][loop])
+        GPIO.output(segments[loop], disChars[char][loop])
         if (dot):
             GPIO.output(pinDP, 1)
         else:
             GPIO.output(pinDP, 0)
 
+
 def closeDisplay():
     GPIO.cleanup()
+
 
 if __name__ == "__main__":
     try:
