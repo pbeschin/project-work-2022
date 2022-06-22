@@ -363,7 +363,7 @@ router.put('/tariffe', (req, res) => {
         console.log(err);}  
     });  
 
-    request.addParameter('giorno', TYPES.Date, new Date().toISOString().split('T')[0]);
+    request.addParameter('giorno', TYPES.Date, req.body.giorno);
     request.addParameter('costo_forzato', TYPES.Float, req.body.costo_forzato);
     
     request.on("doneInProc", function (rowCount, more, rows) {
@@ -373,6 +373,26 @@ router.put('/tariffe', (req, res) => {
         res.end();
     });
 
+
+    connection.execSql(request);  
+});
+
+router.get('/tariffe', (req, res) => {
+    request = new Request("SELECT costo_orario, costo_orario_rotazione, costo_forzato FROM Ttariffe WHERE giorno=@giorno", function(err) {  
+    if (err) {  
+        console.log(err);}  
+    });  
+
+    request.addParameter('giorno', TYPES.Date, new Date().toISOString().split('T')[0]);
+    var result = {};
+    request.on("row", function(columns) {
+        result.costo_orario = columns[0].value;
+        result.costo_orario_rotazione = columns[1].value;
+        result.costo_forzato = columns[2].value;
+    });
+    request.on("requestCompleted", function () {
+        res.json(result);
+    });
 
     connection.execSql(request);  
 });
