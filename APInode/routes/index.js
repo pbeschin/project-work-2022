@@ -93,7 +93,7 @@ router.get('/stato/:idEsp', (req, res) => {
     connection.execSql(request); 
 });
 
-router.get('/lista', (req, res) => {
+router.get('/stato/lista', (req, res) => {
     request = new Request("SELECT ID_posto, presenza FROM TPosti", function(err) {  
         if (err) {  
             console.log(err);}  
@@ -113,7 +113,7 @@ router.get('/lista', (req, res) => {
     connection.execSql(request); 
 });
 
-router.get('/lista/terra', (req, res) => {
+router.get('/stato/lista/terra', (req, res) => {
     request = new Request("SELECT * FROM TPosti WHERE LEFT(ID_Posto,1) = '0'", function(err) {  
         if (err) {  
             console.log(err);}  
@@ -133,7 +133,7 @@ router.get('/lista/terra', (req, res) => {
     connection.execSql(request); 
 });
 
-router.get('/lista/primo', (req, res) => {
+router.get('/stato/lista/primo', (req, res) => {
     request = new Request("SELECT * FROM TPosti WHERE LEFT(ID_Posto,1) = '1'", function(err) {  
         if (err) {  
             console.log(err);}  
@@ -153,7 +153,7 @@ router.get('/lista/primo', (req, res) => {
     connection.execSql(request); 
 });
 
-router.get('/lista/posti_occupati', (req, res) => {
+router.get('/postiOccupati', (req, res) => {
     request = new Request("SELECT ID_posto FROM TPosti WHERE presenza = 1", function(err) {  
         if (err) {  
             console.log(err);}  
@@ -363,7 +363,7 @@ router.put('/tariffe', (req, res) => {
         console.log(err);}  
     });  
 
-    request.addParameter('giorno', TYPES.Date, req.body.giorno);
+    request.addParameter('giorno', TYPES.Date, new Date().toISOString().split('T')[0]);
     request.addParameter('costo_forzato', TYPES.Float, req.body.costo_forzato);
     
     request.on("doneInProc", function (rowCount, more, rows) {
