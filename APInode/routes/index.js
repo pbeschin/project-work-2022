@@ -287,12 +287,12 @@ router.get('/transazioni/settimanaCorrente', (req, res) => {
 router.get('/lista/transazioni', (req, res) => {
     var sqlCommand;
     if (req.query.data_uscita_inizio && req.query.data_uscita_fine) {
-        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita BETWEEN @data_uscita_inizio AND @data_uscita_fine";
+        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita BETWEEN @data_uscita_inizio AND @data_uscita_fine;";
     }
     else if (req.query.data_uscita_inizio) {
-        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita > @data_uscita_inizio";
+        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita > @data_uscita_inizio;";
     } else if (req.query.data_uscita_fine) {
-        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita < @data_uscita_fine";
+        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita < @data_uscita_fine;";
     }
     
     request = new Request(sqlCommand, function(err) {  
@@ -329,7 +329,7 @@ router.put('/transazioni/:ID_rfid/uscita', (req, res) => {
     } else if (modalitaCalcolo == '1') {
         sqlCommand += "EXEC CalcolaImportoRotazione @data_uscita=@du, @ID_rfid=@id;";
     } else {
-        sqlCommand += "EXEC CalcolaImportoFisso @data_uscita=@du, @ID_rfid=@id";
+        sqlCommand += "EXEC CalcolaImportoFisso @data_uscita=@du, @ID_rfid=@id;";
     }
     sqlCommand += "SELECT importo FROM TPagamenti WHERE ID_rfid=@id AND pagato=0;";
     request = new Request(sqlCommand, function(err){
