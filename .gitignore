@@ -1,4 +1,5 @@
 node_modules/
 .vscode/
 .azure/
+desktop.ini
 passwords.json*
