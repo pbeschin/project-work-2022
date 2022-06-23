@@ -25,6 +25,9 @@ parkingSpots = {0: [0]*50,
                 1: [0]*50,
                 2: [0]*50}
 
+#paying RFID
+payRFID = ""
+
 #debug per level
 def printParkingSpots(level):
     print(f"Printing level {level} parking spots")
@@ -87,6 +90,7 @@ def on_park_entry(client, userdata, msg):
 
 
 def park_exit_api(RFID: str):
+    global payRFID
     exitUrl = f"{API_URL}/transazioni/{RFID}/uscita"
     putObj = {"data_uscita" : str(datetime.now(timezone(timedelta(hours = 2))) + timedelta(hours = 2))}
     print(putObj)
@@ -94,9 +98,18 @@ def park_exit_api(RFID: str):
     prezzo = response.json()["prezzo"]
     print(response.status_code, response.json())
     if (response.status_code == 200):
+        payRFID = RFID
         client.publish(f"{TOPIC_ROOT}/{TOPIC_VERSION}/pagamento", payload=f"EURO {prezzo:.2f}", qos=2)
 
-def park_pay_api(RFID: str):
+
+def on_park_exit(client, userdata, msg):
+    print("exit")
+    print(msg.topic+" "+str(msg.payload))
+    [root, version, endpoint] = str(msg.topic).split("/")
+    RFID = msg.payload.decode("utf-8")
+    park_exit_api(RFID)
+
+def park_paid_api(RFID: str):
     payUrl = f"{API_URL}/transazioni/{RFID}/pagamento"
     putObj = {}
     print(putObj)
@@ -105,14 +118,15 @@ def park_pay_api(RFID: str):
     if 200 <= response.status_code <=204:
         client.publish(f"{TOPIC_ROOT}/{TOPIC_VERSION}/barrauscita", payload="1", qos=2)
 
-def on_park_exit(client, userdata, msg):
-    print("exit")
+def on_park_paid(client, userdata, msg):
+    print("paid")
     print(msg.topic+" "+str(msg.payload))
     [root, version, endpoint] = str(msg.topic).split("/")
-    RFID = msg.payload.decode("utf-8")
-    park_exit_api(RFID)
-    park_pay_api(RFID)
-    
+    paid = msg.payload.decode("utf-8")
+    if int(paid) == 1:
+        park_paid_api(payRFID)
+    else:
+        print("Payment failed")
 
 def on_message(client, userdata, msg):
     matched = 0
@@ -128,6 +142,9 @@ def on_message(client, userdata, msg):
             matched = 1
         if endpoint == "uscita":
             on_park_exit(client, userdata, msg)
+            matched = 1
+        if endpoint == "pagato":
+            on_park_paid(client, userdata, msg)
             matched = 1
         
         if matched == 0:
