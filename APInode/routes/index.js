@@ -236,7 +236,7 @@ router.post('/transazioni/:ID_rfid', (req, res) => {
         request.addParameter('data_entrata', TYPES.DateTime , req.body.data_entrata);
 
         request.on("doneInProc", function (rowCount, more, rows){
-            rowCount ? res.status(201) : res.status(404);
+            rowCount ? res.status(201) : res.status(400);
         });
         request.on("requestCompleted", function (rowCount, more, rows) {
             res.end();
@@ -244,7 +244,7 @@ router.post('/transazioni/:ID_rfid', (req, res) => {
 
         connection.execSql(request);
     } else {
-        res.status(500).end();
+        res.status(404).end();
     }
 });
 
@@ -363,7 +363,7 @@ router.put('/transazioni/:ID_rfid/uscita', (req, res) => {
 
         connection.execSql(request);
     } else {
-        res.status(500).end();
+        res.status(404).end();
     }  
 });
 
@@ -378,7 +378,7 @@ router.put('/transazioni/:ID_rfid/pagamento', (req, res) => {
 
         request.on("doneInProc", function (rowCount, more, rows) {
             console.log(rowCount, more, rows);
-            rowCount ? res.status(201) : res.status(404);
+            rowCount ? res.status(201) : res.status(400);
         });
 
         request.on("requestCompleted", function (rowCount, more, rows) {
@@ -387,7 +387,7 @@ router.put('/transazioni/:ID_rfid/pagamento', (req, res) => {
 
         connection.execSql(request);  
     } else {
-        res.status(500).end();
+        res.status(404).end();
     }
 });
 
