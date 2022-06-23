@@ -229,6 +229,7 @@ router.post('/transazioni/:ID_rfid', (req, res) => {
             console.log(err);
         }
     });  
+    
     request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
     request.addParameter('data_entrata', TYPES.DateTime , req.body.data_entrata);
     
@@ -324,34 +325,38 @@ router.get('/lista/transazioni', (req, res) => {
 
 router.put('/transazioni/:ID_rfid/uscita', (req, res) => {
     var sqlCommand = "UPDATE TPagamenti SET data_uscita=@du WHERE ID_rfid=@id AND data_uscita IS NULL;";
-    if (modalitaCalcolo == '0') {
-        sqlCommand += "EXEC CalcolaImporto @data_uscita=@du, @ID_rfid=@id;";
-    } else if (modalitaCalcolo == '1') {
-        sqlCommand += "EXEC CalcolaImportoRotazione @data_uscita=@du, @ID_rfid=@id;";
-    } else {
-        sqlCommand += "EXEC CalcolaImportoFisso @data_uscita=@du, @ID_rfid=@id;";
-    }
+    // if (modalitaCalcolo == '0') {
+    //     sqlCommand += "EXEC CalcolaImporto @data_uscita=@du, @ID_rfid=@id;";
+    // } else if (modalitaCalcolo == '1') {
+    //     sqlCommand += "EXEC CalcolaImportoRotazione @data_uscita=@du, @ID_rfid=@id;";
+    // } else {
+    //     sqlCommand += "EXEC CalcolaImportoFisso @data_uscita=@du, @ID_rfid=@id;";
+    // }
+    sqlCommand += "EXEC CalcolaImporto_3TariffeOrarie @data_uscita=@du, @ID_rfid=@id;";
     sqlCommand += "SELECT importo FROM TPagamenti WHERE ID_rfid=@id AND pagato=0;";
     request = new Request(sqlCommand, function(err){
         if (err) {  
             console.log(err);}  
     });  
+
     request.addParameter('id', TYPES.VarChar, req.params.ID_rfid);  
     request.addParameter('du', TYPES.DateTime, req.body.data_uscita);
 
-    var result;
+    var amount;
     var resStatus = 404;
     request.on("doneInProc", function (rowCount, more, rows) {
         if (rowCount){
-            resStatus = 201;
+            resStatus = 200;
         }
     });
 
     request.on("row", function(columns) {
-        result = columns[0].value;
+        amount = columns[0].value;
+        console.log("row");
     });
     request.on("requestCompleted", function (rowCount, more, rows) {
-        res.status(resStatus).json(result);
+        res.status(resStatus).json({"prezzo": amount});
+        console.log("res");
     });
 
     connection.execSql(request);  
