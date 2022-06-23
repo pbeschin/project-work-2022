@@ -222,25 +222,30 @@ router.get('/tempoMedio', (req, res) => {
 });
 
 router.post('/transazioni/:ID_rfid', (req, res) => {
-    request = new Request("IF NOT EXISTS(SELECT * FROM TPagamenti s " +
-        "WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL) "+
-        "BEGIN INSERT INTO TPagamenti (ID_rfid,data_entrata) VALUES(@ID_rfid,@data_entrata);END", function(err) {  
-        if (err) {  
-            console.log(err);
-        }
-    });  
-    
-    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
-    request.addParameter('data_entrata', TYPES.DateTime , req.body.data_entrata);
-    
-    request.on("doneInProc", function (rowCount, more, rows){
-        rowCount ? res.status(201) : res.status(404);
-    });
-    request.on("requestCompleted", function (rowCount, more, rows) {
-        res.end();
-    });
+    var ora = new Date(req.body.data_entrata).getHours();
+    if (ora >= 6 && ora <= 23) {
+        request = new Request("IF NOT EXISTS(SELECT * FROM TPagamenti s " +
+            "WHERE ID_rfid=@ID_rfid AND data_uscita IS NULL) "+
+            "BEGIN INSERT INTO TPagamenti (ID_rfid,data_entrata) VALUES(@ID_rfid,@data_entrata);END", function(err) {  
+            if (err) {  
+                console.log(err);
+            }
+        });  
 
-    connection.execSql(request);  
+        request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
+        request.addParameter('data_entrata', TYPES.DateTime , req.body.data_entrata);
+
+        request.on("doneInProc", function (rowCount, more, rows){
+            rowCount ? res.status(201) : res.status(404);
+        });
+        request.on("requestCompleted", function (rowCount, more, rows) {
+            res.end();
+        });
+
+        connection.execSql(request);
+    } else {
+        res.status(500).end();
+    }
 });
 
 router.get('/transazioni/settimanaScorsa', (req, res) => {
@@ -294,6 +299,8 @@ router.get('/lista/transazioni', (req, res) => {
         sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita > @data_uscita_inizio;";
     } else if (req.query.data_uscita_fine) {
         sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti WHERE data_uscita < @data_uscita_fine;";
+    } else {
+        sqlCommand = "SELECT ID_rfid, data_entrata, data_uscita, importo, pagato FROM TPagamenti";
     }
     
     request = new Request(sqlCommand, function(err) {  
@@ -324,61 +331,64 @@ router.get('/lista/transazioni', (req, res) => {
 });
 
 router.put('/transazioni/:ID_rfid/uscita', (req, res) => {
-    var sqlCommand = "UPDATE TPagamenti SET data_uscita=@du WHERE ID_rfid=@id AND data_uscita IS NULL;";
-    // if (modalitaCalcolo == '0') {
-    //     sqlCommand += "EXEC CalcolaImporto @data_uscita=@du, @ID_rfid=@id;";
-    // } else if (modalitaCalcolo == '1') {
-    //     sqlCommand += "EXEC CalcolaImportoRotazione @data_uscita=@du, @ID_rfid=@id;";
-    // } else {
-    //     sqlCommand += "EXEC CalcolaImportoFisso @data_uscita=@du, @ID_rfid=@id;";
-    // }
-    sqlCommand += "EXEC CalcolaImporto_3TariffeOrarie @data_uscita=@du, @ID_rfid=@id;";
-    sqlCommand += "SELECT importo FROM TPagamenti WHERE ID_rfid=@id AND pagato=0;";
-    request = new Request(sqlCommand, function(err){
-        if (err) {  
-            console.log(err);}  
-    });  
+    var ora = new Date(req.body.data_uscita).getHours();
+    if (ora >= 6 && ora <= 23) {
+        var sqlCommand = "UPDATE TPagamenti SET data_uscita=@du WHERE ID_rfid=@id AND data_uscita IS NULL;";
+        sqlCommand += "EXEC CalcolaImporto_3TariffeOrarie @data_uscita=@du, @ID_rfid=@id;";
+        sqlCommand += "SELECT importo FROM TPagamenti WHERE ID_rfid=@id AND pagato=0;";
+        request = new Request(sqlCommand, function(err){
+            if (err) {  
+                console.log(err);}  
+        });  
 
-    request.addParameter('id', TYPES.VarChar, req.params.ID_rfid);  
-    request.addParameter('du', TYPES.DateTime, req.body.data_uscita);
+        request.addParameter('id', TYPES.VarChar, req.params.ID_rfid);  
+        request.addParameter('du', TYPES.DateTime, req.body.data_uscita);
 
-    var amount;
-    var resStatus = 404;
-    request.on("doneInProc", function (rowCount, more, rows) {
-        if (rowCount){
-            resStatus = 200;
-        }
-    });
+        var amount;
+        var resStatus = 404;
+        request.on("doneInProc", function (rowCount, more, rows) {
+            if (rowCount){
+                resStatus = 200;
+            }
+        });
 
-    request.on("row", function(columns) {
-        amount = columns[0].value;
-        console.log("row");
-    });
-    request.on("requestCompleted", function (rowCount, more, rows) {
-        res.status(resStatus).json({"prezzo": amount});
-        console.log("res");
-    });
+        request.on("row", function(columns) {
+            amount = columns[0].value;
+            console.log("row");
+        });
+        request.on("requestCompleted", function (rowCount, more, rows) {
+            res.status(resStatus).json({"prezzo": amount});
+            console.log("res");
+        });
 
-    connection.execSql(request);  
+        connection.execSql(request);
+    } else {
+        res.status(500).end();
+    }  
 });
 
 router.put('/transazioni/:ID_rfid/pagamento', (req, res) => {
-    request = new Request("UPDATE TPagamenti SET pagato=1 WHERE ID_rfid = @ID_rfid AND pagato=0", function(err) {  
-    if (err) {  
-        console.log(err);}  
-    });  
-    request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
+    var ora = new Date().getHours();
+    if (ora >= 6 && ora <= 23) {
+        request = new Request("UPDATE TPagamenti SET pagato=1 WHERE ID_rfid = @ID_rfid AND pagato=0", function(err) {  
+        if (err) {  
+            console.log(err);}  
+        });  
+        request.addParameter('ID_rfid', TYPES.VarChar, req.params.ID_rfid);  
 
-    request.on("doneInProc", function (rowCount, more, rows) {
-        console.log(rowCount, more, rows);
-        rowCount ? res.status(201) : res.status(404);
-    });
+        request.on("doneInProc", function (rowCount, more, rows) {
+            console.log(rowCount, more, rows);
+            rowCount ? res.status(201) : res.status(404);
+        });
 
-    request.on("requestCompleted", function (rowCount, more, rows) {
-        res.end();
-    });
+        request.on("requestCompleted", function (rowCount, more, rows) {
+            res.end();
+        });
 
-    connection.execSql(request);  
+        connection.execSql(request);  
+    } else {
+        res.status(500).end();
+    }
 });
 
 router.get('/modalitaTariffa', (req, res) => {
