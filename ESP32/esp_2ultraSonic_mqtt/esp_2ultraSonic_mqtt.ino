@@ -2,7 +2,7 @@
 #include <PubSubClient.h>
 
 #define mqtt_server "test.mosquitto.org"
-#define mqtt_topic_base "pw2k22/1.0"
+#define mqtt_topic_base "pw2k22/1.1/parcheggio"
 #define PARK1_LEVEL 0
 #define PARK1_SLOT1 1
 #define PARK1_SLOT2 2
