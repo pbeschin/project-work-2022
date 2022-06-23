@@ -11,7 +11,7 @@ from display_park import *
 # delete retained message:
 # mosquitto_pub -h test.mosquitto.org -t pw2k22/1.1/uscita -n -r -d
 
-API_URL = "https://pw2022-apinode.azurewebsites.net/"
+API_URL = "https://pw2022-apinode.azurewebsites.net"
 
 MQTT_SERVER = "test.mosquitto.org"
 MQTT_PORT = 1883
