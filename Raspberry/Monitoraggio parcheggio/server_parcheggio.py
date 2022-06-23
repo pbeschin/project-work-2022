@@ -11,7 +11,7 @@ from display_park import *
 # delete retained message:
 # mosquitto_pub -h test.mosquitto.org -t pw2k22/1.1/uscita -n -r -d
 
-BASE_API_URL = "https://pw2022-apinode.azurewebsites.net/"
+API_URL = "https://pw2022-apinode.azurewebsites.net/"
 
 MQTT_SERVER = "test.mosquitto.org"
 MQTT_PORT = 1883
@@ -36,12 +36,12 @@ def printParkingSpots(level):
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-    client.subscribe(f"{TOPIC_ROOT}/{TOPIC_VERSION}/#")
+    client.subscribe(f"{TOPIC_ROOT}/+/#")
 
 # The callback for when a PUBLISH message is received from the server.
 
 def update_park_api(espID: str, statoEsp: bool):
-    parkUrl = f"https://pw2022-apinode.azurewebsites.net/stato/{espID}"
+    parkUrl = f"{API_URL}/stato/{espID}"
     #PUT /stato/:idEsp `{"statoEsp":Boolean}`
     putObj = {"statoEsp": statoEsp}
     print(parkUrl, putObj)
@@ -53,21 +53,30 @@ def on_park_update(client, userdata, msg):
     [root, version, endpoint, level, parkID] = str(msg.topic).split("/")
     #print(tail)
     #print(f"level:{level},parkID:{parkID}")
-    parkingSpots[int(level)][int(parkID) - 1] = int(msg.payload)
-    espID = f"{level}{int(parkID):02d}"
 
-    statoEsp = (bool(msg.payload.decode("utf-8")))
+    statoEsp = (int(msg.payload.decode("utf-8")))
+
+    parkingSpots[int(level)][int(parkID) - 1] = statoEsp
+    espID = f"{level}{int(parkID):02d}"
 
     update_park_api(espID, statoEsp)
         
     printParkingSpots(int(level))
 
-def park_entry_api(RFID: str):
-    entryUrl = f"https://pw2022-apinode.azurewebsites.net/transazioni/{RFID}"
-    postObj = {"data_entrata" : str(datetime.now(timezone(timedelta(hours = 2))))}
+def park_entry_api(RFID: str) -> bool:
+    entryUrl = f"{API_URL}/transazioni/{RFID}"
+    postObj = {"data_entrata" : str(datetime.now(timezone(timedelta(hours = 2)))  + timedelta(hours = 2))}
+    print("DEBUG\n",
+    "\tnow", str(datetime.now()),
+    "\n\ttd", str(datetime.now()  + timedelta(hours = 2)),
+    "\n\ttz", str(datetime.now(timezone(timedelta(hours = 2)))),
+    "\n\ttdz", str(datetime.now(timezone(timedelta(hours = 2)))  + timedelta(hours = 2))
+    )
     print(entryUrl, postObj)
     response = requests.post(entryUrl, json = postObj)
     print(response.status_code, response.text)
+    if 200 <= response.status_code <=204:
+        client.publish(f"{TOPIC_ROOT}/{TOPIC_VERSION}/barraentrata", payload="1", qos=2)
 
 def on_park_entry(client, userdata, msg):
     print("entry")
@@ -78,11 +87,23 @@ def on_park_entry(client, userdata, msg):
 
 
 def park_exit_api(RFID: str):
-    exitUrl = f"https://pw2022-apinode.azurewebsites.net/transazioni/uscita/{RFID}"
-    putObj = {"data_uscita" : str(datetime.now(timezone(timedelta(hours = 2))))}
+    exitUrl = f"{API_URL}/transazioni/{RFID}/uscita"
+    putObj = {"data_uscita" : str(datetime.now(timezone(timedelta(hours = 2))) + timedelta(hours = 2))}
     print(putObj)
     response = requests.put(exitUrl, json = putObj)
+    prezzo = response.json()["prezzo"]
+    print(response.status_code, response.json())
+    if (response.status_code == 200):
+        client.publish(f"{TOPIC_ROOT}/{TOPIC_VERSION}/pagamento", payload=f"EURO {prezzo:.2f}", qos=2)
+
+def park_pay_api(RFID: str):
+    payUrl = f"{API_URL}/transazioni/{RFID}/pagamento"
+    putObj = {}
+    print(putObj)
+    response = requests.put(payUrl, json = putObj)
     print(response.status_code, response.text)
+    if 200 <= response.status_code <=204:
+        client.publish(f"{TOPIC_ROOT}/{TOPIC_VERSION}/barrauscita", payload="1", qos=2)
 
 def on_park_exit(client, userdata, msg):
     print("exit")
@@ -90,43 +111,31 @@ def on_park_exit(client, userdata, msg):
     [root, version, endpoint] = str(msg.topic).split("/")
     RFID = msg.payload.decode("utf-8")
     park_exit_api(RFID)
+    park_pay_api(RFID)
     
 
 def on_message(client, userdata, msg):
-    matched = false
+    matched = 0
     try:
         [root, version, endpoint, *more] = str(msg.topic).split("/")
         if version != TOPIC_VERSION:
-            raise Exception("Wrong version")
+            raise Exception(f"Wrong version [{msg.topic}]")
         if endpoint == "parcheggio":
             on_park_update(client, userdata, msg)
-            matched = true
+            matched = 1
         if endpoint == "entrata":
             on_park_entry(client, userdata, msg)
-            matched = true
+            matched = 1
         if endpoint == "uscita":
             on_park_exit(client, userdata, msg)
-            matched = true
+            matched = 1
         
-        if matched == false:
-            print("on_message: 'endpoint didn't match any value'")
+        if matched == 0:
+            print(f"on_message[{msg.topic}]: 'endpoint didn't match any value'")
     except Exception as e:
         print(e)
     finally:
         pass
-
-
-def CallAPI(parkID, payload):  # body PUT /stato/:idEsp
-    putData = {"statoEsp": payload}
-    req = requests.put(BASE_API_URL+"/stato/"+parkID,
-                       headers={'Content-Type': 'application/json'}, data=json.dumps(putData), timeout=10)
-    print(payload)
-    # print(putData)
-    if req.status_code == 200:
-        print("PUT eseguita")
-    else:
-        print("Errore sulla PUT")
-
 
 client = mqtt.Client()
 client.on_connect = on_connect
