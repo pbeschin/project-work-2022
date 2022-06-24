@@ -64,7 +64,7 @@ router.get('/stato/:idEsp', (req, res) => {
     });  
     
     request.on("requestCompleted", function (rowCount, more, rows) {
-        rowCount ? res.status(201).json(result) : res.status(404).end();
+        res.json(result);
     });
     connection.execSql(request); 
 });
