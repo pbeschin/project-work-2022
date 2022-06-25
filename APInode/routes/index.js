@@ -66,6 +66,7 @@ router.get('/stato/:idEsp', (req, res) => {
     request.on("requestCompleted", function (rowCount, more, rows) {
         res.json(result);
     });
+    
     connection.execSql(request); 
 });
 
