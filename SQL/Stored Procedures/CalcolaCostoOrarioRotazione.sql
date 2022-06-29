@@ -1,4 +1,4 @@
-/****** Object:  StoredProcedure [dbo].[CalcolaCostoOrarioRotazione]    Script Date: 24/06/2022 09:25:46 ******/
+/****** Object:  StoredProcedure [dbo].[CalcolaCostoOrarioRotazione]    Script Date: 29/06/2022 11:37:55 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -67,7 +67,7 @@ END
 
 --se le transazioni della scorsa settimana sono state maggiori rispetto alla media
 
-IF (@transazioni_giorno_settimana_scorsa > @transazioni_media)
+ELSE IF (@transazioni_giorno_settimana_scorsa > @transazioni_media)
 BEGIN
 	PRINT('Transazioni settimana scorsa maggiore della media')
 	DECLARE @differenza1 AS INT
@@ -96,6 +96,20 @@ BEGIN
 		END
 
 	--inserimento costo orario nella data di oggi
+	UPDATE Ttariffe SET costo_orario_rotazione = @costo_orario_rotazione_oggi WHERE giorno = CONVERT(DATE, GETDATE())
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+--se le transazioni della scorsa settimana sono state uguali rispetto alla media
+
+ELSE IF (@transazioni_giorno_settimana_scorsa = @transazioni_media)
+BEGIN
+	PRINT('Transazioni settimana scorsa uguali alla media')
+	SET @costo_orario_rotazione_oggi = @costo_orario_rotazione_scorso
+	PRINT('Costo orario rotazioni oggi:  ' + CONVERT(VARCHAR,@costo_orario_rotazione_oggi))
+
+    --inserimento costo orario nella data di oggi
 	UPDATE Ttariffe SET costo_orario_rotazione = @costo_orario_rotazione_oggi WHERE giorno = CONVERT(DATE, GETDATE())
 END
 

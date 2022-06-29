@@ -1,4 +1,4 @@
-/****** Object:  StoredProcedure [dbo].[CalcolaCostoOrario]    Script Date: 24/06/2022 09:25:30 ******/
+/****** Object:  StoredProcedure [dbo].[CalcolaCostoOrario]    Script Date: 29/06/2022 11:37:11 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -68,8 +68,10 @@ BEGIN
 
 END
 ------------------------------------------------------------------------------------------------------------------------------------------
+
 --se l'affluenza della scorsa settimana è stata maggiore rispetto alla media
-ELSE
+
+ELSE IF (@affluenza_giorno_settimana_scorsa > @affluenza_media)
 BEGIN
 	PRINT('Affluenza della scorsa settimana maggiore rispetto alla media')
 	DECLARE @differenza1 AS DECIMAL(5,2)
@@ -96,14 +98,23 @@ BEGIN
 			SET @costo_orario_oggi = @costo_orario_scorso + (@costo_orario_scorso*0.75)
 			PRINT('Costo orario oggi: ' + CONVERT(VARCHAR,@costo_orario_oggi))
 		END
-	--IF(@costo_orario_oggi > @costo_massimo)	
-	--	BEGIN
-	--		PRINT('Costo orario raggiunto il massimo')
-	--		SET @costo_orario_oggi = @costo_massimo
-	--		PRINT('Costo orario oggi: ' + CONVERT(VARCHAR,@costo_orario_oggi))
-	--	END
+    
 	--inserimento costo orario nella data di oggi
-	INSERT INTO Ttariffe (giorno, costo_orario) VALUES(CONVERT(DATE, GETDATE()),@costo_orario_oggi)
+	UPDATE Ttariffe SET costo_orario = @costo_orario_oggi WHERE giorno = CONVERT(DATE, GETDATE())
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+--se l'affluenza della scorsa settimana è stata uguale rispetto alla media
+
+ELSE IF (@affluenza_giorno_settimana_scorsa = @affluenza_media)
+BEGIN
+	PRINT('Transazioni settimana scorsa uguali alla media')
+	SET @costo_orario_oggi = @costo_orario_scorso
+	PRINT('Costo orario oggi:  ' + CONVERT(VARCHAR,@costo_orario_oggi))
+
+    --inserimento costo orario nella data di oggi
+	UPDATE Ttariffe SET costo_orario = @costo_orario_oggi WHERE giorno = CONVERT(DATE, GETDATE())
 END
 
 
