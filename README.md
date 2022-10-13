@@ -1,11 +1,11 @@
 # PROJECT WORK 2022
 
 Ruoli:
-- Pietro Beschin: programmazione back-end, gestione risorse Azure
-- Alberto Granetto: progettazione algoritmo calcolo tariffa oraria e programmazione stored-procedures del database.
-- Stefano Sella: programmazione ESP32 e cablatura
-- Alvise Battistich: programmazione gateway Raspberry e cablatura
-- Andrea Gironda: programmazione dashboard ASP.NET
+- Pietro Beschin: Programmazione back-end, gestione risorse Azure
+- Alberto Granetto: Progettazione algoritmo calcolo tariffa oraria e programmazione stored-procedures del database.
+- Stefano Sella: Programmazione ESP32 e cablatura
+- Alvise Battistich: Programmazione gateway Raspberry e cablatura
+- Andrea Gironda: Programmazione front-end ASP.NET
 
 API:  (Per avviare app NodeJS: `npm start`)
   - Link: https://pw2022-apinode.azurewebsites.net/
